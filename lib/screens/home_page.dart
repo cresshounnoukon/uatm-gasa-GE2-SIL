@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled/screens/crush_page.dart';
 import 'package:untitled/screens/persons_create_page.dart';
 
@@ -22,30 +23,32 @@ class _HomePageState extends State<HomePage> {
     "Fadyl",
     "Peniel",
   ];
-  List<String> crushs = [
-
-  ];
+  List<String> crushs = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Room mate"),
-        actions: [IconButton(onPressed: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => CrushPage(crushes: crushs),));
-        }, icon: Icon(Icons.favorite))],
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CrushPage(crushes: crushs),
+                    ));
+              },
+              icon: Icon(Icons.favorite))
+        ],
       ),
       body: ListView(
         children: roomMates.reversed
-            .map((e) =>
-            ListTile(
-          onTap: () {
-            addItemToCrush(e);
-          setState(() {
-
-          });
-          },
+            .map((e) => ListTile(
+                  onTap: () {
+                    addItemToCrush(e);
+                    setState(() {});
+                  },
                   leading: CircleAvatar(),
                   title: Text("$e"),
                   subtitle: Text("Apprend à faire les exercices"),
@@ -57,24 +60,48 @@ class _HomePageState extends State<HomePage> {
             .toList(),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async{
+        onPressed: () async {
+
+        //  roomMates.add("KAOUSSARATH");
+         // setState(() {});
           var name=await Navigator.push(context, MaterialPageRoute(builder: (context) => PersonCreatePage(),));
-        print(name);
-          },
+         print(name);
+        },
         child: Icon(Icons.add),
       ),
     );
   }
 
-  addItemToCrush(String item) {
-    if (checkCrush(item)) {
+  addItemToCrush(String item) async{
+    if (await checkCrush(item)) {
       crushs.remove(item);
     } else {
-      crushs.add(item);
+   addCrushToLocalStroage(item);
+   crushs= (await readALlCrush())!;
+
     }
   }
 
-  bool checkCrush(String item) {
+  bool checkCrush(String item)   {
+  readALlCrush().then((value) => crushs=value!);
     return crushs.contains(item);
   }
+
+  addCrushToLocalStroage(String name) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<String>? items = prefs.getStringList('items');
+    if(items==null){
+      items=[];
+    }
+    items.add(name);
+    await prefs.setStringList('items', items!);
+  }
+
+  Future<List<String>?>   readALlCrush() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+   return   await prefs.getStringList("items");
+  }
+
+
 }
